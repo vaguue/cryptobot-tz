@@ -2,7 +2,6 @@ import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config.js";
-import { oCookies } from "../server/http/types.js";
 import HttpError from "../server/httpError.js";
 import type { AuthPayload, RecaptchaResponse } from "../server/http/types.js";
 import logger from "../logger.js";
@@ -30,10 +29,7 @@ function readXUserId(req: Request): number | null {
 }
 
 function readJwt(req: Request): string | undefined {
-  return (
-    (typeof req.cookies?.[oCookies.auth] === "string" ? req.cookies[oCookies.auth] : undefined) ??
-    extractBearer(req.headers.authorization)
-  );
+  return extractBearer(req.headers.authorization);
 }
 
 async function applyRecaptchaIfPresent(req: Request): Promise<void> {

@@ -2,11 +2,6 @@ export type AuthPayload = {
   userTgId: number;
 };
 
-/** Cookie name for JWT (legacy `oCookies.auth`). */
-export const oCookies = {
-  auth: "auth_token" as const,
-};
-
 export type InitDataBody = {
   initData: string;
 };

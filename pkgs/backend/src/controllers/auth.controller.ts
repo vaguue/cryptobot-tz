@@ -3,29 +3,13 @@ import jwt from "jsonwebtoken";
 import { config } from "../config.js";
 import { User } from "../models/User.js";
 import HttpError from "../server/httpError.js";
-import type { ApiFailure, ApiSuccessMessage, AuthPayload, InitDataBody } from "../server/http/types.js";
-import { oCookies } from "../server/http/types.js";
+import type { ApiFailure, ApiSuccess, ApiSuccessMessage, AuthPayload, InitDataBody } from "../server/http/types.js";
 import { initDataSchema } from "../server/http/schemas.js";
 import { parseTelegramUserFromInitData } from "../telegram/validateInitData.js";
 
-function cookieOptions(expires: Date): {
-  expires: Date;
-  httpOnly: boolean;
-  secure: boolean;
-  sameSite: "lax" | "none";
-} {
-  const prod = config.NODE_ENV === "production";
-  return {
-    expires,
-    httpOnly: true,
-    secure: prod,
-    sameSite: prod ? "none" : "lax",
-  };
-}
-
 export async function postAuth(
   req: Request<unknown, unknown, InitDataBody>,
-  res: Response<ApiSuccessMessage | ApiFailure>,
+  res: Response<ApiSuccess<{ token: string }> | ApiFailure>,
   next: NextFunction
 ): Promise<void> {
   try {
@@ -60,8 +44,7 @@ export async function postAuth(
     };
     const token = jwt.sign(payload, config.JWT_SECRET);
 
-    res.cookie(oCookies.auth, token, cookieOptions(expire));
-    res.json({ success: true, message: "user authenticated" });
+    res.json({ success: true, data: { token } });
   } catch (e) {
     next(e);
   }
@@ -71,6 +54,5 @@ export function getUnauth(
   _req: Request,
   res: Response<ApiSuccessMessage | ApiFailure>
 ): void {
-  res.clearCookie(oCookies.auth);
   res.json({ success: true, message: "auth token cleared" });
 }

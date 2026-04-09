@@ -2,7 +2,6 @@ import axios from "axios";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
-  withCredentials: true,
 });
 
 export interface UserStats {
@@ -14,8 +13,6 @@ export interface UserStats {
 type ApiSuccess<T> = { success: true; data: T };
 type ApiFailure = { success: false; message: string };
 export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
-
-type AuthOk = { success: true; message: string };
 
 let localClicks = 0;
 
@@ -32,13 +29,13 @@ function unwrap<T>(body: ApiResponse<T>): T {
   return body.data;
 }
 
-/** POST /auth — same contract as the legacy app (`initData` in body, JWT in httpOnly cookie). */
-export async function auth(initData: string): Promise<AuthOk> {
-  const res = await api.post<AuthOk | ApiFailure>("/auth", { initData });
+/** POST /auth — `initData` in body; JWT returned in JSON and sent as `Authorization: Bearer` on later requests. */
+export async function auth(initData: string): Promise<void> {
+  const res = await api.post<ApiSuccess<{ token: string }> | ApiFailure>("/auth", { initData });
   if (!res.data.success) {
     throw new Error(res.data.message);
   }
-  return res.data;
+  api.defaults.headers.common.Authorization = `Bearer ${res.data.data.token}`;
 }
 
 export async function fetchMyStats(): Promise<UserStats> {
