@@ -1,7 +1,7 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import { getUnauth, postAuthTelegram } from "../controllers/auth.controller.js";
+import { getUnauth, postAuth } from "../controllers/auth.controller.js";
 import { config } from "../config.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { createClickerRouter } from "../routes/clicker.js";
@@ -18,7 +18,7 @@ export function createApp(): express.Express {
     })
   );
 
-  app.post("/api/auth/telegram", postAuthTelegram);
+  app.post("/api/auth", postAuth);
   app.get("/api/unauth", getUnauth);
 
   const protectedApi = express.Router();

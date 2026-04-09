@@ -21,6 +21,12 @@ const schema = z.object({
     .enum(["true", "false"])
     .default("true")
     .transform((v) => v === "true"),
+  /** Skip Telegram initData validation (local dev). Uses DEV_TELEGRAM_USER_ID. */
+  SKIP_INIT_DATA: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
+  DEV_TELEGRAM_USER_ID: z.coerce.number().int().positive().default(12345),
   JWT_SECRET: z.string().min(8),
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   RECAPTCHA_SECRET_KEY: z.string().optional(),
@@ -36,8 +42,8 @@ if (!parsed.success) {
 
 const data = parsed.data;
 if (!data.SKIP_AUTH) {
-  if (!data.TELEGRAM_BOT_TOKEN) {
-    console.error("TELEGRAM_BOT_TOKEN is required when SKIP_AUTH=false");
+  if (!data.TELEGRAM_BOT_TOKEN && !data.SKIP_INIT_DATA) {
+    console.error("TELEGRAM_BOT_TOKEN is required when SKIP_AUTH=false (unless SKIP_INIT_DATA=true)");
     process.exit(1);
   }
 }

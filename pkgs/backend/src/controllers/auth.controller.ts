@@ -1,53 +1,76 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { z } from "zod";
 import { config } from "../config.js";
+import { User } from "../models/User.js";
 import HttpError from "../server/httpError.js";
-import type { ApiResponse, AuthPayload } from "../server/http/types.js";
+import type { ApiFailure, ApiSuccessMessage, AuthPayload, InitDataBody } from "../server/http/types.js";
+import { oCookies } from "../server/http/types.js";
+import { initDataSchema } from "../server/http/schemas.js";
 import { parseTelegramUserFromInitData } from "../telegram/validateInitData.js";
 
-const initBodySchema = z.object({
-  initData: z.string().min(1),
-});
+function cookieOptions(expires: Date): {
+  expires: Date;
+  httpOnly: boolean;
+  secure: boolean;
+  sameSite: "lax" | "none";
+} {
+  const prod = config.NODE_ENV === "production";
+  return {
+    expires,
+    httpOnly: true,
+    secure: prod,
+    sameSite: prod ? "none" : "lax",
+  };
+}
 
-type TokenPayload = { data: AuthPayload };
-
-export async function postAuthTelegram(
-  req: Request,
-  res: Response<ApiResponse<{ token: string }>>,
+export async function postAuth(
+  req: Request<unknown, unknown, InitDataBody>,
+  res: Response<ApiSuccessMessage | ApiFailure>,
   next: NextFunction
 ): Promise<void> {
   try {
-    const { initData } = initBodySchema.parse(req.body);
-    const botToken = config.TELEGRAM_BOT_TOKEN;
-    if (!botToken) {
-      throw new HttpError("Server misconfiguration: TELEGRAM_BOT_TOKEN", 500);
-    }
-    const user = parseTelegramUserFromInitData(initData, botToken);
-    if (!user) {
-      throw new HttpError("Invalid Telegram init data", 401);
+    let telegramId: number;
+
+    if (config.SKIP_INIT_DATA) {
+      telegramId = config.DEV_TELEGRAM_USER_ID;
+    } else {
+      const { initData } = initDataSchema.parse(req.body);
+      const botToken = config.TELEGRAM_BOT_TOKEN;
+      if (!botToken) {
+        throw new HttpError("Server misconfiguration: TELEGRAM_BOT_TOKEN", 500);
+      }
+      const user = parseTelegramUserFromInitData(initData, botToken);
+      if (!user) {
+        throw new HttpError("invalid initData", 400);
+      }
+      telegramId = user.id;
     }
 
-    const token = jwt.sign(
-      { data: { userTgId: user.id } } satisfies TokenPayload,
-      config.JWT_SECRET,
-      { expiresIn: "7d" }
+    const now = new Date();
+    await User.findOneAndUpdate(
+      { telegramId },
+      { $setOnInsert: { telegramId, clicks: 0, updatedAt: now } },
+      { upsert: true }
     );
 
-    res.cookie("auth_token", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: config.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    const expire = new Date(Date.now() + 1000 * 60 * 60 * 24);
+    const payload: { exp: number; data: AuthPayload } = {
+      exp: Math.floor(expire.getTime() / 1000),
+      data: { userTgId: telegramId },
+    };
+    const token = jwt.sign(payload, config.JWT_SECRET);
 
-    res.json({ success: true, data: { token } });
+    res.cookie(oCookies.auth, token, cookieOptions(expire));
+    res.json({ success: true, message: "user authenticated" });
   } catch (e) {
     next(e);
   }
 }
 
-export function getUnauth(_req: Request, res: Response<ApiResponse<null>>): void {
-  res.clearCookie("auth_token");
-  res.json({ success: true, data: null });
+export function getUnauth(
+  _req: Request,
+  res: Response<ApiSuccessMessage | ApiFailure>
+): void {
+  res.clearCookie(oCookies.auth);
+  res.json({ success: true, message: "auth token cleared" });
 }

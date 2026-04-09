@@ -15,6 +15,8 @@ type ApiSuccess<T> = { success: true; data: T };
 type ApiFailure = { success: false; message: string };
 export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
 
+type AuthOk = { success: true; message: string };
+
 let localClicks = 0;
 
 function headerUserId(): number {
@@ -28,6 +30,15 @@ function unwrap<T>(body: ApiResponse<T>): T {
     throw new Error(body.message);
   }
   return body.data;
+}
+
+/** POST /auth — same contract as the legacy app (`initData` in body, JWT in httpOnly cookie). */
+export async function auth(initData: string): Promise<AuthOk> {
+  const res = await api.post<AuthOk | ApiFailure>("/auth", { initData });
+  if (!res.data.success) {
+    throw new Error(res.data.message);
+  }
+  return res.data;
 }
 
 export async function fetchMyStats(): Promise<UserStats> {
@@ -67,10 +78,4 @@ export async function fetchLeaderboard(): Promise<UserStats[]> {
       .sort((a, b) => b.clicks - a.clicks)
       .map((u, i) => ({ ...u, rank: i + 1 }));
   }
-}
-
-/** Call once when using real Telegram auth (SKIP_AUTH=false on server). */
-export async function authenticateWithTelegram(initData: string): Promise<void> {
-  const res = await api.post<ApiResponse<{ token: string }>>("/auth/telegram", { initData });
-  unwrap(res.data);
 }
