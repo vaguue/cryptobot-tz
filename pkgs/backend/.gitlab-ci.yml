@@ -1,0 +1,50 @@
+stages:
+  - build
+  - deploy
+
+
+variables:
+  VERSION: 0.8.${CI_PIPELINE_ID}
+  SERVER_USER: $SERVER_USER
+  CI_REGISTRY: repo.mind-dev.com
+  CONTAINER_IMAGE: $CI_REGISTRY/mind-dev/blue-farm-backend/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
+  CONTAINER_RELEASE_IMAGE: $CI_REGISTRY/mind-dev/blue-farm-backend/$CI_COMMIT_REF_NAME:latest
+
+
+build:
+  image: docker:19-dind
+  services:
+    - docker:19-dind
+  stage: build
+  tags:
+    - gitlab-runner
+  variables:
+    DOCKER_DRIVER: overlay2
+  only:
+    - master
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker pull $CONTAINER_RELEASE_IMAGE || true
+    - docker build --cache-from $CONTAINER_RELEASE_IMAGE --tag $CONTAINER_IMAGE --tag $CONTAINER_RELEASE_IMAGE .
+    - docker push $CONTAINER_IMAGE
+    - docker push $CONTAINER_RELEASE_IMAGE
+
+.deploy:
+  stage: deploy
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"  $CI_REGISTRY
+  script:
+    - docker pull $CONTAINER_RELEASE_IMAGE
+    - cd $path
+    - docker-compose up -d backend
+
+
+deploy-mind-dev:
+  extends: .deploy
+  tags:
+    - gitlab-runner
+  only:
+    - master
+  variables:
+    path: /var/www/blue-farm

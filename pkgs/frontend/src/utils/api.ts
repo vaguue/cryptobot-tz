@@ -2,6 +2,7 @@ import axios from "axios";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
+  withCredentials: true,
 });
 
 export interface UserStats {
@@ -9,6 +10,10 @@ export interface UserStats {
   clicks: number;
   rank?: number;
 }
+
+type ApiSuccess<T> = { success: true; data: T };
+type ApiFailure = { success: false; message: string };
+export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
 
 let localClicks = 0;
 
@@ -18,10 +23,17 @@ function headerUserId(): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function unwrap<T>(body: ApiResponse<T>): T {
+  if (!body.success) {
+    throw new Error(body.message);
+  }
+  return body.data;
+}
+
 export async function fetchMyStats(): Promise<UserStats> {
   try {
-    const res = await api.get<UserStats>("/me");
-    return res.data;
+    const res = await api.get<ApiResponse<UserStats>>("/me");
+    return unwrap(res.data);
   } catch {
     const uid = headerUserId();
     return { id: uid, clicks: localClicks, rank: 999 };
@@ -30,8 +42,8 @@ export async function fetchMyStats(): Promise<UserStats> {
 
 export async function syncClicks(clicksToAdd: number): Promise<UserStats> {
   try {
-    const res = await api.post<UserStats>("/click", { clicks: clicksToAdd });
-    return res.data;
+    const res = await api.post<ApiResponse<UserStats>>("/click", { clicks: clicksToAdd });
+    return unwrap(res.data);
   } catch {
     const uid = headerUserId();
     localClicks += clicksToAdd;
@@ -41,8 +53,8 @@ export async function syncClicks(clicksToAdd: number): Promise<UserStats> {
 
 export async function fetchLeaderboard(): Promise<UserStats[]> {
   try {
-    const res = await api.get<UserStats[]>("/leaderboard");
-    return res.data;
+    const res = await api.get<ApiResponse<UserStats[]>>("/leaderboard");
+    return unwrap(res.data);
   } catch {
     const uid = headerUserId();
     const rows = [
@@ -55,4 +67,10 @@ export async function fetchLeaderboard(): Promise<UserStats[]> {
       .sort((a, b) => b.clicks - a.clicks)
       .map((u, i) => ({ ...u, rank: i + 1 }));
   }
+}
+
+/** Call once when using real Telegram auth (SKIP_AUTH=false on server). */
+export async function authenticateWithTelegram(initData: string): Promise<void> {
+  const res = await api.post<ApiResponse<{ token: string }>>("/auth/telegram", { initData });
+  unwrap(res.data);
 }
