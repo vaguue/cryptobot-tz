@@ -1,0 +1,128 @@
+.default-theme {
+  --primary-background: #1e1e25;
+  --primary-font-color: #fff;
+  --inactive-tab: #383847;
+  --active-tab: #dfdfff66;
+  --inactive-font: #bcbcc8;
+
+  --background-color: #1010ff;
+  --font-color: #fff;
+
+  --tiny-font: 0.8rem;
+  --small-font: 1rem;
+  --average-font: 1.2rem;
+  --medium-font: 1.6rem;
+  --large-font: 1.8rem;
+  --huge-font: 3.3rem;
+
+  --thin-font: 500;
+  --normal-font: 700;
+  --bold-font: 800;
+
+  --border-radius: 0.625rem;
+  --standart-bar: 5rem;
+  --overlay-padding: 1.6rem;
+
+  --nav-bg: #1a1a20;
+  --nav-border: #2a2a35;
+}
+
+:root {
+  --safe-area-top-offset: calc(
+    var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)
+  );
+}
+
+* {
+  touch-action: pan-y;
+}
+
+*,
+*::before,
+*::after {
+  user-select: none;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  isolation: isolate;
+
+  background-color: var(--primary-background);
+  color: var(--primary-font-color);
+
+  font-family: "JetBrains Mono", monospace, sans-serif;
+  font-weight: var(--thin-font);
+  font-size: 12px;
+}
+
+#root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  font-size: var(--small-font);
+  padding-top: env(safe-area-inset-top);
+  box-sizing: border-box;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  padding-bottom: 80px;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  min-height: 60px;
+  background-color: var(--nav-bg);
+  border-top: 1px solid var(--nav-border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 100;
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  color: var(--inactive-font);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 12px;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.bottom-nav button.active {
+  color: var(--primary-font-color);
+  background-color: var(--inactive-tab);
+  font-weight: bold;
+}
+
+.bottom-nav button .nav-icon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}

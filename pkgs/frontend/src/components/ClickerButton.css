@@ -1,0 +1,29 @@
+.clicker-btn {
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.05s ease-in-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 40px auto;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.clicker-btn.pressed {
+  transform: scale(0.95);
+}
+
+.clicker-inner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 10px 20px rgba(16, 16, 255, 0.4));
+}

@@ -1,0 +1,56 @@
+.leaderboard-page {
+  padding-top: 20px;
+}
+
+.title {
+  text-align: center;
+  font-size: var(--large-font);
+  margin-bottom: 20px;
+  color: var(--primary-font-color);
+}
+
+.loading {
+  text-align: center;
+  margin-top: 50px;
+  color: var(--inactive-font);
+}
+
+.list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.leader-row {
+  display: flex;
+  align-items: center;
+  background: var(--inactive-tab);
+  padding: 15px 20px;
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.leader-row.is-me {
+  background: var(--active-tab);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.rank {
+  font-weight: var(--bold-font);
+  color: var(--inactive-font);
+  width: 40px;
+}
+
+.leader-row.is-me .rank {
+  color: var(--primary-font-color);
+}
+
+.user-info {
+  flex: 1;
+  font-weight: var(--thin-font);
+}
+
+.clicks {
+  font-weight: var(--bold-font);
+  color: var(--primary-font-color);
+}

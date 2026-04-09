@@ -1,0 +1,15 @@
+{
+  "name": "cryptobot-tz",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "pkgs/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
