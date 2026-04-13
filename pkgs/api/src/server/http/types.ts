@@ -27,3 +27,18 @@ export type RecaptchaResponse = {
   success: boolean;
   score?: number;
 };
+
+export type UserStatsPayload = {
+  id: number;
+  clicks: number;
+  rank: number;
+};
+
+export type PaginatedData<T> = {
+  rows: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  me?: T;
+};

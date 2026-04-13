@@ -10,6 +10,15 @@ export interface UserStats {
   rank?: number;
 }
 
+export interface PaginatedData<T> {
+  rows: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  me?: T;
+}
+
 type ApiSuccess<T> = { success: true; data: T };
 type ApiFailure = { success: false; message: string };
 export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
@@ -59,9 +68,9 @@ export async function syncClicks(clicksToAdd: number): Promise<UserStats> {
   }
 }
 
-export async function fetchLeaderboard(): Promise<UserStats[]> {
+export async function fetchLeaderboard(page: number = 1, limit: number = 25): Promise<PaginatedData<UserStats>> {
   try {
-    const res = await api.get<ApiResponse<UserStats[]>>("/leaderboard");
+    const res = await api.get<ApiResponse<PaginatedData<UserStats>>>(`/leaderboard?page=${page}&limit=${limit}`);
     return unwrap(res.data);
   } catch {
     const uid = headerUserId();
@@ -71,8 +80,16 @@ export async function fetchLeaderboard(): Promise<UserStats[]> {
       { id: 3, clicks: 250_000, rank: 3 },
       { id: uid, clicks: localClicks, rank: 999 },
     ];
-    return rows
+    const rankedRows = rows
       .sort((a, b) => b.clicks - a.clicks)
       .map((u, i) => ({ ...u, rank: i + 1 }));
+    return {
+      rows: rankedRows,
+      total: 4,
+      page: 1,
+      limit: 25,
+      totalPages: 1,
+      me: { id: uid, clicks: localClicks, rank: 999 }
+    };
   }
 }

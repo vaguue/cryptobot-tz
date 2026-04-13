@@ -1,9 +1,10 @@
 import axios from "axios";
 import type { NextFunction, Request, Response } from "express";
+import { ZodError } from "zod";
 import jwt from "jsonwebtoken";
 import { config } from "../config.js";
-import HttpError from "../server/httpError.js";
-import type { AuthPayload, RecaptchaResponse } from "../server/http/types.js";
+import HttpError from "./errors/httpError.js";
+import type { AuthPayload, RecaptchaResponse, ApiFailure } from "./http/types.js";
 import logger from "../logger.js";
 
 type JwtBody = { exp?: number; data: AuthPayload };
@@ -78,4 +79,32 @@ export async function authMiddleware(
   } catch (err) {
     next(err);
   }
+}
+
+export function errorMiddleware(
+  err: unknown,
+  _req: Request,
+  res: Response<ApiFailure>,
+  _next: NextFunction
+): void {
+  logger.error(err instanceof Error ? err : new Error(String(err)));
+
+  if (err instanceof HttpError) {
+    res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+    });
+    return;
+  }
+  if (err instanceof ZodError) {
+    res.status(400).json({
+      success: false,
+      message: "invalid request",
+    });
+    return;
+  }
+  res.status(500).json({
+    success: false,
+    message: "Something went wrong",
+  });
 }

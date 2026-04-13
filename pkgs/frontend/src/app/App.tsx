@@ -1,34 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState, useContext } from "react";
 import Home from "../pages/Home";
 import Leaderboard from "../pages/Leaderboard";
-import { api } from "../utils/api";
+import { UserContext } from "./InitLayer";
 
 import HomeIcon from "../assets/home.svg?react";
 import StatsIcon from "../assets/stats.svg?react";
 
-const skipAuth = import.meta.env.VITE_SKIP_AUTH === "true";
-
 const App = () => {
   const [activeTab, setActiveTab] = useState<"home" | "leaderboard">("home");
-  const [userId, setUserId] = useState<number | null>(null);
-
-  useEffect(() => {
-    const tg = (
-      window as unknown as {
-        Telegram?: { WebApp?: { initDataUnsafe?: { user?: { id: number } } } };
-      }
-    ).Telegram?.WebApp;
-
-    let uid = 12345;
-    if (tg?.initDataUnsafe?.user?.id) {
-      uid = tg.initDataUnsafe.user.id;
-    }
-    setUserId(uid);
-
-    if (skipAuth) {
-      api.defaults.headers.common["x-user-id"] = String(uid);
-    }
-  }, []);
+  const userId = useContext(UserContext);
 
   return (
     <div className="app-container">

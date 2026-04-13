@@ -19,20 +19,18 @@ export default function Home({ userId }: HomeProps) {
 
   const clickBuffer = useRef(0);
   const textIdCounter = useRef(0);
+  const syncTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     void fetchMyStats().then((stats) => setClicks(stats.clicks));
   }, [userId]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (clickBuffer.current > 0) {
-        const toSync = clickBuffer.current;
-        clickBuffer.current = 0;
-        void syncClicks(toSync).then((stats) => setClicks(stats.clicks));
+    return () => {
+      if (syncTimeout.current) {
+        clearTimeout(syncTimeout.current);
       }
-    }, 1000);
-    return () => clearInterval(interval);
+    };
   }, []);
 
   const handleTap = useCallback((x: number, y: number) => {
@@ -48,6 +46,18 @@ export default function Home({ userId }: HomeProps) {
     setTimeout(() => {
       setFloatingTexts((prev) => prev.filter((t) => t.id !== id));
     }, 1000);
+
+    if (syncTimeout.current) {
+      clearTimeout(syncTimeout.current);
+    }
+    
+    syncTimeout.current = setTimeout(() => {
+      if (clickBuffer.current > 0) {
+        const toSync = clickBuffer.current;
+        clickBuffer.current = 0;
+        void syncClicks(toSync).catch((err) => console.error("Failed to sync envelope:", err));
+      }
+    }, 500);
   }, []);
 
   return (

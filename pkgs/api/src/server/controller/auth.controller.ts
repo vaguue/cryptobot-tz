@@ -1,11 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { config } from "../config.js";
-import { User } from "../models/User.js";
-import HttpError from "../server/httpError.js";
-import type { ApiFailure, ApiSuccess, ApiSuccessMessage, AuthPayload, InitDataBody } from "../server/http/types.js";
-import { initDataSchema } from "../server/http/schemas.js";
-import { parseTelegramUserFromInitData } from "../telegram/validateInitData.js";
+import { config } from "../../config.js";
+import { UserService } from "../../services/userService.js";
+
+const users = new UserService();
+import HttpError from "../errors/httpError.js";
+import type { ApiFailure, ApiSuccess, ApiSuccessMessage, AuthPayload, InitDataBody } from "../http/types.js";
+import { initDataSchema } from "../http/schemas.js";
+import { parseTelegramUserFromInitData } from "../../utils/telegram.js";
 
 export async function postAuth(
   req: Request<unknown, unknown, InitDataBody>,
@@ -30,12 +32,7 @@ export async function postAuth(
       telegramId = user.id;
     }
 
-    const now = new Date();
-    await User.findOneAndUpdate(
-      { telegramId },
-      { $setOnInsert: { telegramId, clicks: 0, updatedAt: now } },
-      { upsert: true }
-    );
+    await users.ensureUser(telegramId);
 
     const expire = new Date(Date.now() + 1000 * 60 * 60 * 24);
     const payload: { exp: number; data: AuthPayload } = {

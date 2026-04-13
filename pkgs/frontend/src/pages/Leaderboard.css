@@ -19,6 +19,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-bottom: 20px;
 }
 
 .leader-row {
@@ -33,6 +34,18 @@
 .leader-row.is-me {
   background: var(--active-tab);
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+.me-separator {
+  text-align: center;
+  color: var(--inactive-font);
+  margin-bottom: 15px;
+  font-size: 20px;
+  letter-spacing: 5px;
+}
+
+.sticky-me {
+  margin-bottom: 20px;
 }
 
 .rank {
@@ -53,4 +66,32 @@
 .clicks {
   font-weight: var(--bold-font);
   color: var(--primary-font-color);
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0 30px;
+}
+
+.pagination button {
+  background: var(--button-bg);
+  color: var(--button-color);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: var(--bold-font);
+}
+
+.pagination button:disabled {
+  background: var(--inactive-tab);
+  color: var(--inactive-font);
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: var(--inactive-font);
+  font-size: 14px;
 }
